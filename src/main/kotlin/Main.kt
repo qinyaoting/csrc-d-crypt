@@ -25,7 +25,8 @@ fun main() {
         repeat(5) { i ->
             val cmd = getAuthLogin1Cmd()
             val cmdHexStr = cmd.toHexString()
-            println("${i + 1}  Ts Challenge:\t ${cmdHexStr.substring(10, 42)}")
+            val reCmd = cmd.sliceArray(5 until 21).reversedArray()
+            println("${i + 1}  Ts Challenge:\t ${cmdHexStr.substring(10, 42)} \t\t  re:${reCmd.toHexString()}")
             val bytesWritten = comPort.writeBytes(cmd, cmd.size)
             if (bytesWritten > 0) {
                 val buffer = ByteArray(64)
@@ -34,7 +35,8 @@ fun main() {
                     val login1RspHex = buffer.toHexString()
                     println("Login1 Rsp:\t $login1RspHex")
                     val readerChallenge = buffer.sliceArray(21 until 37)
-                    val rsRsp = generateTsResponse(readerChallenge, ByteArray(16));
+                    //val authKey = buffer.sliceArray(5 until 21)  //ByteArray(16)
+                    val rsRsp = generateTsResponse(readerChallenge, ByteArray(32));
                     val cmd2 = getAuthLogin2Cmd(rsRsp);
                     val bytesWritten2 = comPort.writeBytes(cmd2, cmd2.size)
                     if (bytesWritten2 > 0) {
@@ -152,6 +154,7 @@ fun generateTsResponse(readerChallenge: ByteArray, keyBytes: ByteArray): ByteArr
     cipher.init(Cipher.ENCRYPT_MODE, secretKey)
     val encryptedResult = cipher.doFinal(tsLittleEndian)
     val calculatedRsp = encryptedResult.toHexString()
+    println("TsRsp:\t\t $calculatedRsp")
     return encryptedResult
 }
 
